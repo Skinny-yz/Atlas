@@ -1,4 +1,6 @@
-        local HttpService = game:GetService("HttpService")
+--hello twistzz skidder, you really want skid libs bro?
+
+local HttpService = game:GetService("HttpService")
         local httpRequest = (syn and syn.request) or httprequest or request or (http and http.request)
         Library = {
         	Open = true,
