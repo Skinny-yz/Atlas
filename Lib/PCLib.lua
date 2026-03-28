@@ -1,4 +1,5 @@
---a
+--atlas pc lib edit by skinny
+
 if getgenv().Library then 
 	getgenv().Library:Unload()
 end
@@ -4712,9 +4713,9 @@ local Library do
 				Parent = (Library.Holder and Library.Holder.Instance) or nil,
 				Name = "\0",
 				BorderColor3 = FromRGB(0, 0, 0),
-				AnchorPoint = Vector2New(0.5, 0.5),
+				AnchorPoint = Vector2New(0, 0),
 				BackgroundTransparency = 0.3,
-				Position = UDim2New(0.5, 0, 0.5, 0),
+				Position = UDim2New(0, Camera.ViewportSize.X / 3.5, 0, Camera.ViewportSize.Y / 3.5),
 				Size = Window.Size,
 				ClipsDescendants = true,
 				Visible = true,
@@ -4841,8 +4842,8 @@ local Library do
 			Instances:Create("Frame", {
 				Parent = Items["MainFrame"].Instance,
 				Name = "\0",
-				Size = UDim2New(0, 1, 1, 0),
-				Position = not IsMobile and UDim2New(0, 220, 0, 0) or UDim2New(0, 152, 0, 0),
+				Size = UDim2New(0, 1, 1, -30),
+				Position = not IsMobile and UDim2New(0, 220, 0, 30) or UDim2New(0, 152, 0, 30),
 				BorderColor3 = FromRGB(0, 0, 0),
 				ZIndex = 2,
 				BorderSizePixel = 0,
