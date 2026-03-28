@@ -1,4 +1,5 @@
 --ui by samet, edited by skinny 
+--a
 if getgenv().Library then 
 	getgenv().Library:Unload()
 end
@@ -841,6 +842,7 @@ local Library do
 		for Index, Value in self.Threads do 
 			coroutine.close(Value)
 		end
+ 
  
 		if self.Holder then 
 			self.Holder:Clean()
@@ -4770,6 +4772,66 @@ local Library do
 			Items["MainFrame"]:MakeDraggable()
 			Items["MainFrame"]:MakeResizeable(Vector2New(400, 300), Vector2New(9999, 9999))
  
+			-- Frosted Glass: camada de gradiente simulando vidro fosco
+			Items["FrostBase"] = Instances:Create("Frame", {
+				Parent = Items["MainFrame"].Instance,
+				Name = "\0",
+				Size = UDim2New(1, 0, 1, 0),
+				Position = UDim2New(0, 0, 0, 0),
+				BackgroundColor3 = FromRGB(255, 255, 255),
+				BackgroundTransparency = 0.92,
+				BorderSizePixel = 0,
+				ZIndex = 1
+			})
+ 
+			Instances:Create("UICorner", {
+				Parent = Items["FrostBase"].Instance,
+				Name = "\0",
+				CornerRadius = UDimNew(0, 5)
+			})
+ 
+			Instances:Create("UIGradient", {
+				Parent = Items["FrostBase"].Instance,
+				Name = "\0",
+				Rotation = 135,
+				Transparency = NumberSequence.new({
+					NumberSequenceKeypoint.new(0,   0.75),
+					NumberSequenceKeypoint.new(0.4, 0.88),
+					NumberSequenceKeypoint.new(1,   0.72)
+				}),
+				Color = ColorSequence.new({
+					ColorSequenceKeypoint.new(0,   FromRGB(255, 255, 255)),
+					ColorSequenceKeypoint.new(0.5, FromRGB(200, 195, 210)),
+					ColorSequenceKeypoint.new(1,   FromRGB(255, 255, 255))
+				})
+			})
+ 
+			-- borda brilhante fina (efeito glass highlight)
+			Items["FrostBorder"] = Instances:Create("Frame", {
+				Parent = Items["MainFrame"].Instance,
+				Name = "\0",
+				Size = UDim2New(1, 0, 1, 0),
+				Position = UDim2New(0, 0, 0, 0),
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+				ZIndex = 1
+			})
+ 
+			Instances:Create("UICorner", {
+				Parent = Items["FrostBorder"].Instance,
+				Name = "\0",
+				CornerRadius = UDimNew(0, 5)
+			})
+ 
+			Instances:Create("UIStroke", {
+				Parent = Items["FrostBorder"].Instance,
+				Name = "\0",
+				Color = FromRGB(255, 255, 255),
+				Transparency = 0.7,
+				Thickness = 1,
+				LineJoinMode = Enum.LineJoinMode.Round
+			})
+ 
 			Items["ImageBackground"] = Instances:Create("ImageLabel", {
 				Parent = Items["MainFrame"].Instance,
 				Name = "\0",
@@ -5016,6 +5078,11 @@ local Library do
  
 		function Window:SetBackgroundTransparency(Value)
 			Items["MainFrame"].Instance.BackgroundTransparency = Value
+			-- ajusta o frosted glass proporcionalmente à transparência do fundo
+			-- quanto mais transparente o fundo, mais o frost aparece
+			if Items["FrostBase"] then
+				Items["FrostBase"].Instance.BackgroundTransparency = 0.75 + (Value * 0.2)
+			end
 		end
  
 		function Window:SetBackgroundImage(Value)
@@ -5050,6 +5117,7 @@ local Library do
 		local IsOpen = true
 		Window.IsOpen = true
 		local OldSize = Window.Size
+ 
  
 		function Window:Minimize(Bool)
 			IsMinisize = Bool
