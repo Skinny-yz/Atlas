@@ -4917,30 +4917,7 @@ local Library do
 				BackgroundColor3 = FromRGB(255, 255, 255)
 			})  Items["Input"]:AddToTheme({TextColor3 = "Text", PlaceholderColor3 = "Inactive Text"})
 
-			Items["Cursor"] = Instances:Create("Frame", {
-				Parent = Library.Holder.Instance,
-				Name = "\0",
-				BackgroundTransparency = 1,
-				Position = UDim2New(0, 0, 0, 0),
-				BorderColor3 = FromRGB(0, 0, 0),
-				Size = UDim2New(0, 16, 0, 16),
-				BorderSizePixel = 0,
-				BackgroundColor3 = FromRGB(0, 0, 0)
-			})
 
-			Items["Image"] = Instances:Create("ImageLabel", {
-				Parent = Items["Cursor"].Instance,
-				Name = "\0",
-				ImageColor3 = FromRGB(232, 186, 248),
-				BorderColor3 = FromRGB(0, 0, 0),
-				Image = "rbxassetid://0",
-				BackgroundTransparency = 1,
-				Size = UDim2New(0, 16, 0, 16),
-				BorderSizePixel = 0,
-				ZIndex = 10001,
-				Rotation = -90,
-				BackgroundColor3 = FromRGB(232, 186, 248)
-			})  Items["Image"]:AddToTheme({ImageColor3 = "Accent"})
 
 			if IsMobile then 
 				Items["FloatingButton"] = Instances:Create("TextButton", {
@@ -4990,8 +4967,6 @@ local Library do
 
 			Window.Items = Items
 		end
-
-		UserInputService.MouseIconEnabled = false
 
 		local Debounce = false
 
@@ -5065,15 +5040,8 @@ local Library do
 		Library:Connect(UserInputService.InputBegan, function(Input)
 			if tostring(Input.KeyCode) == Library.MenuKeybind or tostring(Input.UserInputType) == Library.MenuKeybind then
 				Window.IsOpen = not Window.IsOpen
-				Items["Image"].Instance.Visible = Window.IsOpen
-				UserInputService.MouseIconEnabled = not Window.IsOpen
 				Items["MainFrame"].Instance.Visible = Window.IsOpen
 			end
-		end)
-
-		Library:Connect(RunService.RenderStepped, function()
-			local MouseLocation = UserInputService:GetMouseLocation() 
-			Items["Cursor"].Instance.Position = UDim2New(0, MouseLocation.X - 1, 0, MouseLocation.Y - 56)           
 		end)
 
 		Items["MinimizeButton"]:Connect("MouseButton1Down", function()
