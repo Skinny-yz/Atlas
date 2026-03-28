@@ -1,5 +1,4 @@
---atlas pc lib edit by skinny
-
+--ui by samet, edited by skinny 
 if getgenv().Library then 
 	getgenv().Library:Unload()
 end
@@ -973,7 +972,10 @@ local Library do
 	end
  
 	Library.LoadConfig = function(self, Config)
-		local Decoded = HttpService:JSONDecode(Config)
+		local DecodeOk, Decoded = pcall(function() return HttpService:JSONDecode(Config) end)
+		if not DecodeOk or type(Decoded) ~= "table" then
+			return false, "JSON inválido: " .. tostring(Decoded)
+		end
  
 		local Success, Result = Library:SafeCall(function()
 			for Index, Value in Decoded do 
@@ -4442,6 +4444,17 @@ local Library do
 				Position = UDim2New(0, 10, 0, 6)
 			}) Items["Title"]:AddToTheme({TextColor3 = "Text"})
  
+			Instances:Create("Frame", {
+				Parent = Items["MainFrame"].Instance,
+				Name = "\0",
+				Size = UDim2New(1, 0, 0, 1),
+				Position = UDim2New(0, 0, 0, 29),
+				BorderColor3 = FromRGB(0, 0, 0),
+				ZIndex = 2,
+				BorderSizePixel = 0,
+				BackgroundColor3 = FromRGB(41, 37, 45)
+			}):AddToTheme({BackgroundColor3 = "Border"})
+ 
 			Items["Description"] = Instances:Create("TextLabel", {
 				Parent = Items["Notification"].Instance,
 				FontFace = Library.Font,
@@ -4477,14 +4490,44 @@ local Library do
 			})
 		end
  
+		-- animação de entrada: slide vindo da direita + fade in
+		local NotifFrame = Items["Notification"].Instance
+		NotifFrame.Position = UDim2New(1, 20, 0, 0)
+		NotifFrame.BackgroundTransparency = 1
+		for _, child in ipairs(NotifFrame:GetDescendants()) do
+			if child:IsA("TextLabel") then child.TextTransparency = 1 end
+			if child:IsA("Frame") then child.BackgroundTransparency = 1 end
+			if child:IsA("UIStroke") then child.Transparency = 1 end
+		end
+		Tween:Create(NotifFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2New(0, 0, 0, 0), BackgroundTransparency = 0.06}, true)
+		task.delay(0.05, function()
+			for _, child in ipairs(NotifFrame:GetDescendants()) do
+				if child:IsA("TextLabel") then
+					Tween:Create(child, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {TextTransparency = 0}, true)
+				end
+				if child:IsA("UIStroke") then
+					Tween:Create(child, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Transparency = 0.8}, true)
+				end
+			end
+		end)
+ 
 		Items["Accent"]:Tween(
 			TweenInfo.new(Duration, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
 			{Size = UDim2New(0, 0, 1, 0)}
 		)
  
 		task.delay(Duration, function()
-			Tween:Create(Items["Notification"].Instance, TweenInfo.new(0.3), {BackgroundTransparency = 1}, true)
-			task.wait(0.3)
+			-- slide saindo para direita + fade out
+			Tween:Create(NotifFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Position = UDim2New(1, 20, 0, 0), BackgroundTransparency = 1}, true)
+			for _, child in ipairs(NotifFrame:GetDescendants()) do
+				if child:IsA("TextLabel") then
+					Tween:Create(child, TweenInfo.new(0.25), {TextTransparency = 1}, true)
+				end
+				if child:IsA("UIStroke") then
+					Tween:Create(child, TweenInfo.new(0.25), {Transparency = 1}, true)
+				end
+			end
+			task.wait(0.32)
 			Items["Notification"]:Clean()
 		end)
 	end
@@ -4713,9 +4756,9 @@ local Library do
 				Parent = (Library.Holder and Library.Holder.Instance) or nil,
 				Name = "\0",
 				BorderColor3 = FromRGB(0, 0, 0),
-				AnchorPoint = Vector2New(0, 0),
+				AnchorPoint = Vector2New(0.5, 0.5),
 				BackgroundTransparency = 0.3,
-				Position = UDim2New(0, Camera.ViewportSize.X / 3.5, 0, Camera.ViewportSize.Y / 3.5),
+				Position = UDim2New(0.5, 0, 0.5, 0),
 				Size = Window.Size,
 				ClipsDescendants = true,
 				Visible = true,
@@ -4725,7 +4768,7 @@ local Library do
 			})  Items["MainFrame"]:AddToTheme({BackgroundColor3 = "Background"})
  
 			Items["MainFrame"]:MakeDraggable()
-			Items["MainFrame"]:MakeResizeable(Vector2New(Window.Size.X.Offset, Window.Size.Y.Offset), Vector2New(9999, 9999))
+			Items["MainFrame"]:MakeResizeable(Vector2New(400, 300), Vector2New(9999, 9999))
  
 			Items["ImageBackground"] = Instances:Create("ImageLabel", {
 				Parent = Items["MainFrame"].Instance,
@@ -4981,67 +5024,64 @@ local Library do
  
 		local RenderStepped
  
-		Items["Input"]:Connect("Focused", function()
+		local function RunSearch()
 			local PageSearchData = Library.SearchItems[Library.CurrentPage]
- 
-			if not PageSearchData then
-				return 
+			if not PageSearchData then return end
+			local Text = StringLower(Items["Input"].Instance.Text)
+			for Index, Value in PageSearchData do
+				Value.Item.Instance.Visible = Text == "" or StringFind(StringLower(Value.Name), Text) ~= nil
 			end
+		end
  
-			RenderStepped = RunService.RenderStepped:Connect(function()
-				for Index, Value in PageSearchData do 
-					local Name = Value.Name
-					local Element = Value.Item
- 
-					if StringFind(StringLower(Name), StringLower(Items["Input"].Instance.Text)) then
-						if Items["Input"].Instance.Text ~= "" then 
-							Element.Instance.Visible  = true 
-						else
-							Element.Instance.Visible  = true 
-						end
-					else
-						Element.Instance.Visible = false
-					end
-				end
-			end)
+		Items["Input"]:Connect("Focused", function()
+			if RenderStepped then RenderStepped:Disconnect() end
+			RenderStepped = RunService.RenderStepped:Connect(RunSearch)
 		end)
  
 		Items["Input"]:Connect("FocusLost", function()
-			if RenderStepped then 
+			if RenderStepped then
 				RenderStepped:Disconnect()
 				RenderStepped = nil
 			end
+			RunSearch()
 		end)
  
 		local IsMinisize = false
-		local IsOpen = false
-		local OldSize = Items["MainFrame"].Instance.AbsoluteSize
+		local IsOpen = true
+		Window.IsOpen = true
+		local OldSize = Window.Size
  
 		function Window:Minimize(Bool)
 			IsMinisize = Bool
  
-			if IsMinisize then 
-				Items["MainFrame"]:Tween(nil, {Size = UDim2New(0, OldSize.X, 0, 35)})
+			if IsMinisize then
+				OldSize = Items["MainFrame"].Instance.Size
 				Items["MainFrame"]:Tween(nil, {Size = UDim2New(0, 275, 0, 35)})
 			else
-				Items["MainFrame"]:Tween(nil, {Size = UDim2New(0, OldSize.X, 0, OldSize.Y)})
+				Items["MainFrame"]:Tween(nil, {Size = OldSize})
 			end
 		end
  
 		function Window:SetOpen(Bool)
 			IsOpen = Bool
+			Window.IsOpen = Bool
  
 			if IsOpen then
 				Items["MainFrame"].Instance.Visible = true
+				Items["MainFrame"]:Tween(TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {BackgroundTransparency = 0.3})
 			else
-				Items["MainFrame"].Instance.Visible = false
+				Items["MainFrame"]:Tween(TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {BackgroundTransparency = 1})
+				task.delay(0.2, function()
+					if not IsOpen then
+						Items["MainFrame"].Instance.Visible = false
+					end
+				end)
 			end
 		end
  
 		Library:Connect(UserInputService.InputBegan, function(Input)
 			if tostring(Input.KeyCode) == Library.MenuKeybind or tostring(Input.UserInputType) == Library.MenuKeybind then
-				Window.IsOpen = not Window.IsOpen
-				Items["MainFrame"].Instance.Visible = Window.IsOpen
+				Window:SetOpen(not IsOpen)
 			end
 		end)
  
@@ -6464,27 +6504,36 @@ local Library do
 	end
  
 	Library.CheckForAutoLoad = function(self)
-		local Config = readfile(self.Folders.Directory .. "/autoload.json")
+		local Ok, Config = pcall(readfile, self.Folders.Directory .. "/autoload.json")
  
-		if not Config or Config == "" then 
-			return 
+		if not Ok or not Config or Config == "" then
+			return
+		end
+ 
+		-- verifica se o JSON é válido antes de tentar carregar
+		local JsonOk, Decoded = pcall(function()
+			return game:GetService("HttpService"):JSONDecode(Config)
+		end)
+ 
+		if not JsonOk or type(Decoded) ~= "table" then
+			Library:Notification("Aviso", "Autoload corrompido, ignorando.", 4)
+			return
 		end
  
 		local Success, Error = Library:LoadConfig(Config)
  
-		if Success then 
+		if Success then
 			Library:Notification("Success!", "Succesfully autoloaded config.", 5)
  
-			task.wait(0.3)
- 
-			Library:Thread(function() -- i do this because sometimes the themes dont update
-				for Index, Value in Library.Theme do 
+			Library:Thread(function()
+				task.wait(0.3)
+				for Index, Value in Library.Theme do
 					Library.Theme[Index] = Library.Flags["Theme" .. Index].Color
 					Library:ChangeTheme(Index, Library.Flags["Theme" .. Index].Color)
-				end    
+				end
 			end)
 		else
-			Library:Notification("Error!", "Failed to load config.", 5)
+			Library:Notification("Error!", "Failed to load config: " .. tostring(Error), 5)
 		end
 	end
  
